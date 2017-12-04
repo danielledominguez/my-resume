@@ -1,5 +1,5 @@
 import os
-from flask import Flask, session, render_template, request, flash, redirect, url_for
+from flask import Flask, session, render_template, request, flash, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ class Professor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
     department = db.Column(db.Text)
-    courses = db.relationship('Course', backref='professor')
+    courses = db.relationship('Course', backref='professor', cascade="delete")
 
 
 class Course(db.Model):
@@ -58,9 +58,23 @@ def add_professors():
         db.session.commit()
         return redirect(url_for('show_all_professors'))
 
+@app.route('/api/professor/add', methods=['POST'])
+def add_ajax_professors():
+    # get data from the form
+    name = request.form['name']
+    department = request.form['department']
+
+    # insert the data into the database
+    professor = Professor(name=name, department=department)
+    db.session.add(professor)
+    db.session.commit()
+    # flash message type: success, info, warning, and danger from bootstrap
+    flash('Professor Inserted', 'success')
+    return jsonify({"id": str(professor.id), "name": professor.name})
+
 
 @app.route('/professor/edit/<int:id>', methods=['GET', 'POST'])
-def edit_professors(id):
+def edit_professor(id):
     professor = Professor.query.filter_by(id=id).first()
     if request.method == 'GET':
         return render_template('professor-edit.html', professor=professor)
@@ -71,6 +85,26 @@ def edit_professors(id):
         # update the database
         db.session.commit()
         return redirect(url_for('show_all_professors'))
+
+@app.route('/professor/delete/<int:id>', methods=['GET', 'POST'])
+def delete_professor(id):
+    professor = Professor.query.filter_by(id=id).first()
+    if request.method == 'GET':
+        return render_template('professor-delete.html', professor=professor)
+    if request.method == 'POST':
+        # delete the artist by id
+        # all related songs are deleted as well
+        db.session.delete(professor)
+        db.session.commit()
+        return redirect(url_for('show_all_professors'))
+
+
+@app.route('/api/professor/<int:id>', methods=['DELETE'])
+def delete_ajax_professor(id):
+    professor = Professor.query.get_or_404(id)
+    db.session.delete(professor)
+    db.session.commit()
+    return jsonify({"id": str(professor.id), "name": professor.name})
 
 
 # song-all.html adds song id to the edit button using a hidden input
@@ -117,6 +151,27 @@ def edit_course(id):
         # update the database
         db.session.commit()
         return redirect(url_for('show_all_courses'))
+
+@app.route('/course/delete/<int:id>', methods=['GET', 'POST'])
+def delete_course(id):
+    course = Course.query.filter_by(id=id).first()
+    professors = Professor.query.all()
+    if request.method == 'GET':
+        return render_template('course-delete.html', course=course, professors=professors)
+    if request.method == 'POST':
+        # use the id to delete the song
+        # song.query.filter_by(id=id).delete()
+        db.session.delete(course)
+        db.session.commit()
+        return redirect(url_for('show_all_courses'))
+
+
+@app.route('/api/course/<int:id>', methods=['DELETE'])
+def delete_ajax_course(id):
+    course = Course.query.get_or_404(id)
+    db.session.delete(course)
+    db.session.commit()
+    return jsonify({"id": str(song.id), "title": course.title})
 
 
 @app.route('/about')
