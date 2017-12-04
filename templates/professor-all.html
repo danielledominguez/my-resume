@@ -12,7 +12,6 @@
       <table class="table">
         <thead>
           <tr>
-            <th>#</th>
             <th>Name</th>
             <th>Department</th>
             <th>Actions</th>
@@ -21,13 +20,12 @@
         <tbody>
           {% for professor in professors %}
           <tr>
-              <th scope="row">{{professor.id}}</th>
               <td>{{professor.name}}</td>
               <td>{{professor.department}}</td>
               <td>
                 <a href="/professor/edit/{{professor.id}}" class="btn btn-success" role="button" aria-disabled="true">Edit</a>
                 <a href="/professor/delete/{{professor.id}}" class="btn btn-danger" role="button">Delete</a>
-                <button class="btn btn-warning delete_ajax_btn" role="button" data-professor-id="{{professor.id}}">Delete Ajax</a>
+                <button class="btn btn-warning delete_ajax_btn" role="button" data-professor-id="{{professor.id}}">Delete Ajax</button>
               </td>
           </tr>
           {% endfor%}
